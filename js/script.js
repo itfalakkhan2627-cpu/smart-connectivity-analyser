@@ -1495,9 +1495,12 @@ async function updateAISections() {
 
         if (!response.ok) {
 
-            throw new Error(
+            const apiError = new Error(
                 `AI API returned ${response.status}`
             );
+
+            apiError.status = response.status;
+            throw apiError;
         }
 
         const result =
@@ -1580,16 +1583,21 @@ async function updateAISections() {
             error
         );
 
-        if (prediction) {
+        const isDependencyError =
+            Number(error && error.status) === 503;
 
+        const fallbackMessage = isDependencyError
+            ? "Required AI dependencies or model files are unavailable."
+            : "The AI service is temporarily unavailable. Please try again later.";
+
+        if (prediction) {
             prediction.textContent =
-                "AI prediction unavailable: AI dependencies are missing.";
+                `AI prediction unavailable: ${fallbackMessage}`;
         }
 
         if (anomaly) {
-
             anomaly.textContent =
-                "AI anomaly detection unavailable: AI dependencies are missing.";
+                `AI anomaly detection unavailable: ${fallbackMessage}`;
         }
     }
 }
@@ -1658,111 +1666,59 @@ async function saveNetworkTest(
 
 async function loadNetworkHistory() {
 
+    const emptyState = $("historyEmptyState");
+    const errorState = $("historyErrorState");
+    const chartCanvas = $("networkChart");
+
     try {
-
-        const rangeElement =
-            $("historyRange");
-
-
-        const range =
-            rangeElement
-                ? rangeElement.value
-                : "recent";
-
-
-        const response =
-            await fetch(
-                `${API_BASE}/network-history?range=${encodeURIComponent(
-                    range
-                )}`,
-                {
-                    cache: "no-store"
-                }
-            );
-
+        const rangeElement = $("historyRange");
+        const range = rangeElement ? rangeElement.value : "recent";
+        const response = await fetch(
+            API_BASE + "/network-history?range=" + encodeURIComponent(range),
+            { cache: "no-store" }
+        );
 
         if (!response.ok) {
-
-            throw new Error(
-                `History request failed: ${response.status}`
-            );
+            throw new Error("History request failed: " + response.status);
         }
 
+        const data = await response.json();
+        const history = Array.isArray(data) ? data : [];
+        const hasHistory = history.length > 0;
 
-        const data =
-            await response.json();
+        if (emptyState) emptyState.hidden = hasHistory;
+        if (errorState) errorState.hidden = true;
+        if (chartCanvas) chartCanvas.hidden = !hasHistory;
 
-
-        const history =
-            Array.isArray(data)
-                ? data
-                : [];
-const emptyState = $("historyEmptyState");
-const chartCanvas = $("networkChart");
-
-const hasHistory = history.length > 0;
-
-if (emptyState) {
-    emptyState.hidden = hasHistory;
-}
-
-if (chartCanvas) {
-    chartCanvas.hidden = !hasHistory;
-}
-
-        updateHistoryChart(
-            history
-        );
-
-
-        if (history.length > 0) {
-
-            const latest =
-                history[
-                    history.length - 1
-                ];
-
-
-            /*
-               Restore latest database result.
-            */
-
-            if (
-                currentMetrics.download === null &&
-                latest.download_mbps !== null
-            ) {
-
-                currentMetrics.download =
-                    Number(
-                        latest.download_mbps
-                    );
-            }
-
-
-            if (
-                currentMetrics.upload === null &&
-                latest.upload_mbps !== null
-            ) {
-
-                currentMetrics.upload =
-                    Number(
-                        latest.upload_mbps
-                    );
-            }
+        if (hasHistory) {
+            updateHistoryChart(history);
+        } else if (networkChart) {
+            networkChart.destroy();
+            networkChart = null;
         }
 
+        if (hasHistory) {
+            const latest = history[history.length - 1];
 
+            if (currentMetrics.download === null && latest.download_mbps !== null) {
+                currentMetrics.download = Number(latest.download_mbps);
+            }
+
+            if (currentMetrics.upload === null && latest.upload_mbps !== null) {
+                currentMetrics.upload = Number(latest.upload_mbps);
+            }
+        }
     } catch (error) {
+        console.error("Could not load network history:", error);
 
-        console.error(
-            "Could not load network history:",
-            error
-        );
+        if (emptyState) emptyState.hidden = true;
+        if (errorState) errorState.hidden = false;
+        if (chartCanvas) chartCanvas.hidden = true;
 
-
-        updateHistoryChart(
-            []
-        );
+        if (networkChart) {
+            networkChart.destroy();
+            networkChart = null;
+        }
     }
 }
 
