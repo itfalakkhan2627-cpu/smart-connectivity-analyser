@@ -372,28 +372,30 @@
 
                 <div class="chart-container">
 
-    <canvas id="networkChart"></canvas>
+                    <canvas id="networkChart"></canvas>
 
-    <div
-        id="historyEmptyState"
-        class="history-empty-state"
-        role="status"
-        hidden
-    >
-        <h3>No Network History Yet</h3>
+                    <div
+                        id="historyEmptyState"
+                        class="history-empty-state"
+                        role="status"
+                        hidden
+                    >
+                        <h3>No Network History Yet</h3>
+                        <p>Your network history will appear here after your first speed test.</p>
+                        <p>Run your first speed test to get started.</p>
+                    </div>
 
-        <p>
-            Your network history will appear here
-            after your first speed test.
-        </p>
+                    <div
+                        id="historyErrorState"
+                        class="history-empty-state history-error-state"
+                        role="alert"
+                        hidden
+                    >
+                        <h3>Network History Unavailable</h3>
+                        <p>We could not load your network history. Please check the connection and try again.</p>
+                    </div>
 
-        <p>
-            Run your first speed test to get started.
-        </p>
-    </div>
-
-</div>
-
+                </div>
 
 
             <!-- Session Statistics -->
