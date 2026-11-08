@@ -335,6 +335,49 @@ body {
     height: 100% !important;
 }
 
+#networkChart[hidden] {
+    display: none !important;
+}
+
+.history-state {
+    min-height: 280px;
+    width: 100%;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    text-align: center;
+    color: #475569;
+}
+
+.history-state[hidden] {
+    display: none !important;
+}
+
+.history-state h3 {
+    margin: 0;
+    color: #312e81;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.history-state p {
+    max-width: 34rem;
+    margin: 0;
+    font-size: .875rem;
+    line-height: 1.6;
+}
+
+.history-error-state h3 {
+    color: #9a3412;
+}
+
+.history-error-state {
+    color: #7c2d12;
+}
+
 /* =========================================================
    INTERACTIVE CONNECTIVITY MAP
    ========================================================= */

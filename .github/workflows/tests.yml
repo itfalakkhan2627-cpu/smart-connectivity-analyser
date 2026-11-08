@@ -27,7 +27,7 @@ jobs:
         run: node --check js/script.js
 
       - name: Run connectivity score tests
-        run: node --test tests/connectivity-score.test.js
+        run: npm test
 
   python-checks:
     name: Python Backend Syntax

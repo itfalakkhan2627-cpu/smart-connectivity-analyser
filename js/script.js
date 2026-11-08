@@ -181,7 +181,6 @@ async function initializeApplication() {
     detectNetworkType();
 
     initializeMap();
-    initializeChart();
     loadSavedLocations();
 
     await loadNetworkHistory();
@@ -207,6 +206,11 @@ function setupButtons() {
     $("exportCSV")?.addEventListener(
         "click",
         exportHistoryToCSV
+    );
+
+    $("retryHistory")?.addEventListener(
+        "click",
+        () => loadNetworkHistory()
     );
 
     $("historyRange")?.addEventListener("change", (event) => {
@@ -823,6 +827,28 @@ function normalizeHistoryItem(item = {}) {
     };
 }
 
+function getHistoryDisplayState(history, hasError = false) {
+    if (hasError) return "error";
+
+    return Array.isArray(history) && history.length > 0
+        ? "data"
+        : "empty";
+}
+
+function setHistoryDisplayState(state) {
+    const canvas = $("networkChart");
+    const emptyState = $("historyEmptyState");
+    const errorState = $("historyErrorState");
+
+    if (canvas) canvas.hidden = state !== "data";
+    if (emptyState) emptyState.hidden = state !== "empty";
+    if (errorState) errorState.hidden = state !== "error";
+
+    if (state === "data" && networkChart) {
+        networkChart.resize();
+    }
+}
+
 async function loadNetworkHistory(range = null) {
     const selectedRange =
         range || $("historyRange")?.value || "recent";
@@ -863,22 +889,23 @@ async function loadNetworkHistory(range = null) {
                 Number.isFinite(Date.parse(item.timestamp))
             );
 
+        updateHistoryChart(sessionTests, selectedRange);
+
     } catch (error) {
         console.warn(
             "Network history could not be loaded:",
             error.message
         );
+
+        setHistoryDisplayState(
+            getHistoryDisplayState([], true)
+        );
     }
 
-    updateHistoryChart(sessionTests, selectedRange);
     updateSessionStatistics();
 }
 
 function updateHistoryChart(history = sessionTests, range = null) {
-    if (!networkChart) initializeChart();
-
-    if (!networkChart) return;
-
     const selectedRange =
         range || $("historyRange")?.value || "recent";
 
@@ -908,6 +935,30 @@ function updateHistoryChart(history = sessionTests, range = null) {
         .sort((a, b) =>
             Date.parse(a.timestamp) - Date.parse(b.timestamp)
         );
+
+    const displayState = getHistoryDisplayState(filtered);
+    setHistoryDisplayState(displayState);
+
+    if (displayState === "empty") {
+        if (networkChart) {
+            networkChart.data.labels = [];
+            networkChart.data.datasets.forEach((dataset) => {
+                dataset.data = [];
+            });
+            networkChart.update();
+        }
+
+        return;
+    }
+
+    if (!networkChart) initializeChart();
+
+    if (!networkChart) {
+        setHistoryDisplayState("error");
+        return;
+    }
+
+    networkChart.resize();
 
     networkChart.data.labels = filtered.map((item) =>
         new Date(item.timestamp).toLocaleString([], {
@@ -1703,18 +1754,46 @@ function updateAIAnalysis() {
     }
 }
 
+function getAIServiceFallbackMessage(status) {
+    if (Number(status) === 503) {
+        return "AI model dependencies or model files are unavailable. Local trend analysis remains available.";
+    }
+
+    return "The AI service is temporarily unavailable. Local trend analysis remains available.";
+}
+
 async function updateAISectionsFromBackend() {
+    const statusElement = $("aiServiceStatus");
+
     try {
         const response = await fetch(
             `${API_BASE}/ai/analyze`,
             { cache: "no-store" }
         );
 
-        if (!response.ok) return;
+        if (!response.ok) {
+            if (statusElement) {
+                statusElement.textContent =
+                    getAIServiceFallbackMessage(response.status);
+            }
+
+            return;
+        }
 
         const result = await response.json();
 
-        if (!result?.success) return;
+        if (!result?.success) {
+            if (statusElement) {
+                statusElement.textContent =
+                    getAIServiceFallbackMessage(response.status);
+            }
+
+            return;
+        }
+
+        if (statusElement) {
+            statusElement.textContent = "";
+        }
 
         const predictionData = result.prediction || {};
         const anomalyData = result.anomaly || {};
@@ -1752,6 +1831,11 @@ async function updateAISectionsFromBackend() {
             "Backend AI analysis unavailable:",
             error.message
         );
+
+        if (statusElement) {
+            statusElement.textContent =
+                getAIServiceFallbackMessage(0);
+        }
     }
 }
 
@@ -2064,7 +2148,9 @@ if (typeof module !== "undefined" && module.exports) {
         isValidMetricNumber,
         formatNumber,
         formatMetric,
-        formatNetworkMetric
+        formatNetworkMetric,
+        getHistoryDisplayState,
+        getAIServiceFallbackMessage
     };
 }
 /* =========================================================

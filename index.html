@@ -376,6 +376,7 @@
     <div>
       <h2 id="metricsHeading" class="text-lg font-bold">Real-Time Network Metrics</h2>
       <p class="text-xs text-slate-500">Live performance measurements</p>
+      <p id="metricsHelpText" class="text-xs text-slate-500" role="note">Unavailable means a measurement could not be retrieved; it does not mean the value is zero.</p>
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -448,7 +449,19 @@
     </div>
 
     <div class="chart-container">
-      <canvas id="networkChart" role="img" aria-label="Network performance history chart"></canvas>
+      <canvas id="networkChart" role="img" aria-label="Network performance history chart" hidden></canvas>
+
+      <div id="historyEmptyState" class="history-state" role="status" aria-live="polite" hidden>
+        <h3>No network history yet</h3>
+        <p>Your saved network measurements will appear here after you run a network test.</p>
+        <p>Run your first test to start building your history.</p>
+      </div>
+
+      <div id="historyErrorState" class="history-state history-error-state" role="alert" hidden>
+        <h3>Network history unavailable</h3>
+        <p>We could not retrieve or display your network history. Check your connection and try again.</p>
+        <button id="retryHistory" type="button" class="control-btn">Try again</button>
+      </div>
     </div>
 
   </section>
@@ -611,6 +624,7 @@
       <p id="anomalyResult" class="text-xs text-slate-600 mt-2" aria-live="polite">
         Waiting for network data.
       </p>
+      <p id="aiServiceStatus" class="text-xs text-amber-700 mt-2" role="status" aria-live="polite"></p>
     </div>
 
   </section>
