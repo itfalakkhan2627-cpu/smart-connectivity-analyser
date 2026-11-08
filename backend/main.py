@@ -57,6 +57,9 @@ try:
 except Exception as error:
     torch = None
     AI_IMPORT_ERROR = str(error)
+    # Keep AI status endpoints available when optional ML imports fail.
+    FEATURES = ()
+    SEQUENCE_LENGTH = 8
 else:
     AI_IMPORT_ERROR = None
 
@@ -365,7 +368,23 @@ def initialize_database():
 
 
 initialize_database()
-from backend.final_predictor import final_predictor, FINAL_PREDICTOR_READY
+
+try:
+    from backend.final_predictor import final_predictor, FINAL_PREDICTOR_READY
+except Exception as error:
+    FINAL_PREDICTOR_READY = False
+    _FINAL_PREDICTOR_ERROR = str(error)
+
+    class _UnavailableFinalPredictor:
+        message = f"AI prediction dependencies are unavailable: {_FINAL_PREDICTOR_ERROR}"
+        record_count = 0
+        training_samples = 0
+
+        def predict(self):
+            raise RuntimeError(self.message)
+
+    final_predictor = _UnavailableFinalPredictor()
+
 AI_MODELS_READY, AI_MODELS_MESSAGE = load_ai_models()
 
 
