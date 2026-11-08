@@ -233,3 +233,33 @@ def test_invalid_request_is_not_saved(client):
     history = client.get("/api/network-history?range=monthly")
 
     assert history.json() == []
+
+# ============================================================
+# OPTIONAL AI DEPENDENCY FALLBACK
+# ============================================================
+
+def test_ai_status_remains_available_when_optional_imports_fail(client, monkeypatch):
+    import backend.main as main
+
+    monkeypatch.setattr(main, "AI_IMPORT_ERROR", "optional AI dependency missing")
+    monkeypatch.setattr(main, "AI_MODELS_READY", False)
+    monkeypatch.setattr(main, "AI_MODELS_MESSAGE", "AI dependencies unavailable")
+
+    response = client.get("/api/ai/status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is False
+    assert payload["sequence_length"] == 8
+
+
+def test_ai_prediction_reports_service_unavailable_when_model_is_missing(client, monkeypatch):
+    import backend.main as main
+
+    monkeypatch.setattr(main, "FINAL_PREDICTOR_READY", False)
+
+    response = client.get("/api/ai/prediction")
+
+    assert response.status_code == 503
+    assert response.json()["detail"]
+
