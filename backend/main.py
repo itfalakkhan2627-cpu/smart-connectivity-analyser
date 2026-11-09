@@ -1302,7 +1302,7 @@ def ai_prediction():
     if not FINAL_PREDICTOR_READY:
         raise HTTPException(
             status_code=503,
-            detail=final_predictor.message,
+            detail=getattr(final_predictor, "message", AI_MODELS_MESSAGE),
         )
 
     try:

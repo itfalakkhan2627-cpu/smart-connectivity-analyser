@@ -1,0 +1,5 @@
+{
+  "name": "smart-connectivity-analyser-checks",
+  "private": true,
+  "scripts": { "test": "node --test tests/dashboard-empty-states.test.js" }
+}
