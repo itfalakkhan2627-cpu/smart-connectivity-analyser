@@ -1656,6 +1656,17 @@ async function saveNetworkTest(
    NETWORK HISTORY
    ========================================================= */
 
+function setNetworkHistoryState(state) {
+    const emptyState = $("historyEmptyState");
+    const errorState = $("historyErrorState");
+    const chartContainer = $("networkChart")?.parentElement;
+
+    if (emptyState) emptyState.hidden = state !== "empty";
+    if (errorState) errorState.hidden = state !== "error";
+    if (chartContainer) chartContainer.hidden = state !== "populated";
+}
+
+
 async function loadNetworkHistory() {
 
     try {
@@ -1698,6 +1709,7 @@ async function loadNetworkHistory() {
                 ? data
                 : [];
 
+        setNetworkHistoryState(history.length > 0 ? "populated" : "empty");
 
         updateHistoryChart(
             history
@@ -1749,6 +1761,7 @@ async function loadNetworkHistory() {
         );
 
 
+        setNetworkHistoryState("error");
         updateHistoryChart(
             []
         );

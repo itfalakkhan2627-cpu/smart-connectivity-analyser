@@ -47,6 +47,15 @@ try:
 except Exception as error:
     torch = None
     AI_IMPORT_ERROR = str(error)
+    FEATURES = ()
+    SEQUENCE_LENGTH = 8
+    ConnectivityPredictor = None
+    TransformerAutoencoder = None
+    load_network_data = lambda: []
+    normalize_values = None
+    denormalize_value = None
+    final_predictor = None
+    FINAL_PREDICTOR_READY = False
 else:
     AI_IMPORT_ERROR = None
 
@@ -326,7 +335,6 @@ def initialize_database():
 
 
 initialize_database()
-from backend.final_predictor import final_predictor, FINAL_PREDICTOR_READY
 AI_MODELS_READY, AI_MODELS_MESSAGE = load_ai_models()
 
 
@@ -1406,6 +1414,15 @@ def ai_anomaly():
 
 @app.get("/api/ai/analyze")
 def ai_analyze():
+    if not AI_MODELS_READY:
+        return {
+            "success": False,
+            "available": False,
+            "message": AI_MODELS_MESSAGE,
+            "prediction": None,
+            "anomaly": None,
+        }
+
     return {
         "success": True,
         "prediction": ai_prediction(),

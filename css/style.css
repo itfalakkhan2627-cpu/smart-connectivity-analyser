@@ -1731,3 +1731,20 @@ footer p {
         font-size: 34px;
     }
 }
+
+/* Dashboard network history states (Issue #5) */
+.history-state {
+    margin: 1rem 0;
+    padding: 1.25rem;
+    border: 1px dashed var(--glass-border);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, .55);
+    color: var(--text-secondary);
+    text-align: center;
+    font-size: .9rem;
+}
+.history-state-error {
+    border-color: rgba(220, 38, 38, .3);
+    color: #b91c1c;
+}
+.history-state[hidden] { display: none !important; }
